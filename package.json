@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "hapi": "^11.0.2",
+    "node-stringify": "0.0.18",
     "strformat": "0.0.7"
   }
 }
