@@ -203,13 +203,13 @@ function getArticle(url, callback) {
 				var detail = getDetails(body)
 				if (detail) {
 					ARTICLE_STACK.push(url)
-					log(url)
-					log('hi'+body.docs[0].headline)
-					callback({'url':url,
-						'headline':body.docs[0].headline,
-						'body':detail
+					callback({
+						'url': url,
+						'headline': body.docs[0].headline,
+						'body': detail
 					})
-				}else{
+				}
+				else {
 					callback(null)
 				}
 			}
@@ -265,6 +265,26 @@ server.route({
 	handler: function(request, reply) {
 		var number = request.params.number
 		log('/articledetail/number/' + number)
+		var list = _.last(LIST_STACK)
+		if (list) {
+			var url = list[number - 1].url
+			if (url) {
+				getArticle(url, function(detail) {
+					if (detail) {
+						reply(detail)
+					}
+					else {
+						reply(ERROR_RESULT_RESPONSE)
+					}
+				})
+			}
+			else {
+				reply(NO_MATCH_RESPONSE)
+			}
+		}
+		else {
+			reply(EMPTY_RESULT_RESPONSE)
+		}
 	}
 });
 
