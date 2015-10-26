@@ -7,7 +7,8 @@ var Hapi = require('hapi');
 var Q = require('q')
 var R = require('request')
 var SET = require("collections/set");
-
+var _ = require('lodash')
+// headline object: {headline:..., url:...} 
 var LIST_STACK = []
 var ARTICLE_STACK = []
 
@@ -56,8 +57,18 @@ var httpGet = function(url) {
 }
 
 function build_headline_list(body) {
-	log(body)
-	return []
+	var json = JSON.parse(body)
+	if(!json.docs){
+		return null
+	}
+	var ret = _.reduce(json.docs, function(result, item){
+		result.push({
+			'url':item.url,
+			'headline':item.headline
+		})
+		return result
+	}, [])
+	return ret
 }
 
 var CURRENT_LIST_OFFSET = 0
@@ -119,7 +130,7 @@ server.route({
 		else {
 			getHeadlineList(topic_q(keyword), function(list) {
 				log(list)
-				reply('');
+				reply(JSON.stringify(list));
 			})
 		}
 	}
