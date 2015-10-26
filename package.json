@@ -9,8 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "collections": "^1.2.4",
     "hapi": "^11.0.2",
     "node-stringify": "0.0.18",
+    "q": "^1.4.1",
     "strformat": "0.0.7"
   }
 }
