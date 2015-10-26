@@ -288,6 +288,30 @@ server.route({
 	}
 });
 
+
+server.route({
+	method: 'GET',
+	path: '/currentarticle',
+	handler: function(request, reply) {
+		log('/currentarticle')
+		var url = _.last(ARTICLE_STACK)
+		if (url) {
+			getArticle(url, function(detail) {
+				if (detail) {
+					reply(detail)
+				}
+				else {
+					reply(ERROR_RESULT_RESPONSE)
+				}
+			})
+		}
+		else {
+			reply(NO_MATCH_RESPONSE)
+		}
+	}
+});
+
+
 server.start(function() {
 	console.log('Server running at:', server.info.uri);
 });
