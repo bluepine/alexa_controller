@@ -1,31 +1,95 @@
-var PORT = 5000
+//var PORT = 5000
 var LIST_SIZE = 5
 var CONTENT_API_BASE = 'http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/'
 
 /////////////config ends
 var Hapi = require('hapi');
+var Q = require('q')
+var R = require('request')
+var SET = require("collections/set");
 
 var LIST_STACK = []
 var ARTICLE_STACK = []
 
-var SET = require("collections/set");
+
 var ARTICLE_BLACKLIST_SET = SET()
 
 var server = new Hapi.Server();
 server.connection({
-	port: PORT
+	port: process.env.PORT,
+	host: process.env.IP
 });
-//server.connection({ port: process.env.PORT, host: process.env.IP});
 
-var endPoints = {
-	"articlelistontopic": "https://alexaserver-noyda.c9.io/articlelistontopic/{0}/start/{1}/length/{2}",
-	"articledetail": "https://alexaserver-noyda.c9.io/articledetail/keyword/{0}"
-};
 
-function log(text){
+function log(text) {
 	console.log(text)
 }
 
+var SECTION_SET = SET(['sport', 'business', 'health', 'tech', 'entertainment', 'living', 'travel', 'politics', 'world', 'us', 'style', 'china', 'asia', 'middleeast', 'africa', 'europe', 'americas'])
+
+function topic_q(topic) {
+	var ret
+	if (SECTION_SET.has(topic)) {
+		ret = '/section:' + topic + '/'
+	}
+	else {
+		ret = '/headline:' + topic + '/'
+	}
+	return ret
+}
+
+function offset_q(offset) {
+	return 'rows:5/start:' + offset + '/'
+}
+
+var httpGet = function(url) {
+	var deferred = Q.defer();
+	R(url, function(error, response, body) {
+		if (!error && response.statusCode == 200) {
+			deferred.resolve(body)
+		}
+		else {
+			deferred.resolve(null)
+		}
+	})
+	return deferred.promise;
+}
+
+function build_headline_list(body) {
+	log(body)
+	return []
+}
+
+var CURRENT_LIST_OFFSET = 0
+var LAST_LIST_QUERY
+
+function getHeadlineList(query, callback) {
+	if (LAST_LIST_QUERY == query) {
+		CURRENT_LIST_OFFSET += LIST_SIZE
+	}
+	else {
+		CURRENT_LIST_OFFSET = 0
+		LAST_LIST_QUERY = null
+	}
+	query += offset_q(CURRENT_LIST_OFFSET)
+	httpGet(CONTENT_API_BASE + query)
+		.then(function(body) {
+			var headline_list = build_headline_list(body)
+			if (headline_list) {
+				LIST_STACK.push(headline_list)
+			}
+			else {
+				log('empty result')
+				headline_list = null
+			}
+			callback(headline_list)
+		})
+		.catch(function(error) {
+			callback(null)
+		})
+		.done()
+
+}
 server.route({
 	method: 'GET',
 	path: '/reset',
@@ -33,6 +97,7 @@ server.route({
 		LIST_STACK = []
 		ARTICLE_STACK = []
 		ARTICLE_BLACKLIST_SET.clear()
+		log('/reset')
 		reply('');
 	}
 });
@@ -45,10 +110,18 @@ server.route({
 	method: 'GET',
 	path: '/articlelist/topic/{keyword}/{date?}',
 	handler: function(request, reply) {
-		var keyword =  request.params.keyword
+		var keyword = request.params.keyword
 		var date = request.params.date
 		log('/articlelist/topic/' + keyword + ' date: ' + date)
-		reply('');
+		if (date) {
+
+		}
+		else {
+			getHeadlineList(topic_q(keyword), function(list) {
+				log(list)
+				reply('');
+			})
+		}
 	}
 });
 
@@ -56,7 +129,7 @@ server.route({
 	method: 'GET',
 	path: '/articlelist/{date?}',
 	handler: function(request, reply) {
-		var keyword =  request.params.keyword
+		var keyword = request.params.keyword
 		log('/articlelist' + keyword)
 	}
 });
@@ -70,10 +143,10 @@ server.route({
 	method: 'GET',
 	path: '/articledetail/keyword/{keyword}',
 	handler: function(request, reply) {
-			var keyword = request.params.keyword;
-			log('/articledetail/keyword' + keyword)
+		var keyword = request.params.keyword;
+		log('/articledetail/keyword' + keyword)
 	}
-});
+})
 
 /*
 	articledetail/number/2 #this API assumes the current list exists and is
@@ -84,7 +157,7 @@ server.route({
 	path: '/articledetail/number/{number}',
 	handler: function(request, reply) {
 		var number = request.params.number
-		log('/articledetail/number/'+number)
+		log('/articledetail/number/' + number)
 	}
 });
 
