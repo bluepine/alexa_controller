@@ -8,7 +8,7 @@ var Q = require('q')
 var R = require('request')
 var SET = require("collections/set");
 var _ = require('lodash')
-// headline object: {headline:..., url:...} 
+	// headline object: {headline:..., url:...} 
 var LIST_STACK = []
 var ARTICLE_STACK = []
 
@@ -58,13 +58,13 @@ var httpGet = function(url) {
 
 function build_headline_list(body) {
 	var json = JSON.parse(body)
-	if(!json.docs){
+	if (!json.docs) {
 		return null
 	}
-	var ret = _.reduce(json.docs, function(result, item){
+	var ret = _.reduce(json.docs, function(result, item) {
 		result.push({
-			'url':item.url,
-			'headline':item.headline
+			'url': item.url,
+			'headline': item.headline
 		})
 		return result
 	}, [])
@@ -124,15 +124,14 @@ server.route({
 		var keyword = request.params.keyword
 		var date = request.params.date
 		log('/articlelist/topic/' + keyword + ' date: ' + date)
+		var query = topic_q(keyword)
 		if (date) {
+			query += '/'+ date
+		}
+		getHeadlineList(query, function(list) {
+			reply(JSON.stringify(list));
+		})
 
-		}
-		else {
-			getHeadlineList(topic_q(keyword), function(list) {
-				log(list)
-				reply(JSON.stringify(list));
-			})
-		}
 	}
 });
 
