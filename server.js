@@ -82,8 +82,9 @@ var CURRENT_LIST_OFFSET = 0
 var LAST_LIST_QUERY = null
 
 function getHeadlineList(query, callback) {
-	log('LAST_LIST_QUERY:' + LAST_LIST_QUERY)
-	log('query'+query)
+	// log('LAST_LIST_QUERY:' + LAST_LIST_QUERY)
+	// log('query'+query)
+	ARTICLE_INDEX = 0
 	if (LAST_LIST_QUERY == null) {
 		LAST_LIST_QUERY = query
 		CURRENT_LIST_OFFSET = 0
@@ -120,6 +121,9 @@ server.route({
 	method: 'GET',
 	path: '/reset',
 	handler: function(request, reply) {
+		ARTICLE_INDEX = 0
+		LAST_LIST_QUERY = null
+		CURRENT_LIST_OFFSET = 0
 		LIST_STACK = []
 		ARTICLE_STACK = []
 		ARTICLE_BLACKLIST_SET.clear()
@@ -167,13 +171,14 @@ server.route({
 	}
 });
 
-
+var ARTICLE_INDEX = 0
 
 function search_headline_list(list, keyword) {
 	var arrayLength = list.length;
 	for (var i = 0; i < arrayLength; i++) {
 		var item = list[i]
 		if (item.headline.toLowerCase().indexOf(keyword.toLowerCase()) != -1) {
+			ARTICLE_INDEX = i
 			return item.url
 		}
 	}
@@ -185,7 +190,7 @@ function url_q(url) {
 }
 
 
-function getDetails(body) {
+function buildBody(body) {
 	if (!body || !body.docs || !body.docs[0] || !body.docs[0].body || !body.docs[0].body.paragraphs) {
 		return null
 	}
@@ -211,7 +216,7 @@ function getArticle(url, callback, donotpush) {
 		.then(function(body) {
 			if (body) {
 				body = JSON.parse(body)
-				var detail = getDetails(body)
+				var detail = buildBody(body)
 				if (detail) {
 					if (!donotpush) {
 						if(url != _.last(ARTICLE_STACK)){
@@ -286,6 +291,7 @@ server.route({
 				reply(NO_MATCH_RESPONSE)
 				return
 			}
+			ARTICLE_INDEX = number -1
 			var url = list[number - 1].url
 			if (url) {
 				getArticle(url, function(detail) {
@@ -374,6 +380,38 @@ server.route({
 	}
 });
 
+
+server.route({
+	method: 'GET',
+	path: '/nextarticle',
+	handler: function(request, reply) {
+		log('/nextarticle')
+		if(!LIST_STACK){
+			reply(NO_MATCH_RESPONSE)
+			return
+		}
+		if((ARTICLE_INDEX+1) >= _.last(LIST_STACK).length){
+			reply(EMPTY_RESULT_RESPONSE)
+			return
+		}
+		ARTICLE_INDEX += 1
+		var url = _.last(LIST_STACK)[ARTICLE_INDEX].url
+		if (url) {
+			getArticle(url, function(detail) {
+				if (detail) {
+					reply(detail)
+				}
+				else {
+					reply(ERROR_RESULT_RESPONSE)
+				}
+			}, true)
+		}
+		else {
+			reply(EMPTY_RESULT_RESPONSE)
+		}
+	}
+});
+
 server.route({
 	method: 'GET',
 	path: '/previouslist',
@@ -383,6 +421,7 @@ server.route({
 			reply(EMPTY_RESULT_RESPONSE)
 			return
 		}
+		ARTICLE_INDEX = 0
 		LIST_STACK.pop()
 		var list = _.last(LIST_STACK)
 		if (list) {
@@ -391,6 +430,22 @@ server.route({
 		else {
 			reply(EMPTY_RESULT_RESPONSE)
 		}
+	}
+});
+
+
+server.route({
+	method: 'GET',
+	path: '/newlist',
+	handler: function(request, reply) {
+		log('/new')
+		if(!LAST_LIST_QUERY){
+			reply(NO_MATCH_RESPONSE)
+			return
+		}
+		getHeadlineList(LAST_LIST_QUERY, function(list) {
+			reply(JSON.stringify(list));
+		})
 	}
 });
 
