@@ -366,6 +366,7 @@ server.route({
 	path: '/previousarticle',
 	handler: function(request, reply) {
 		log('/previousarticle')
+		log(ARTICLE_STACK)
 		if (!ARTICLE_STACK || ARTICLE_STACK.length == 1) {
 			reply(EMPTY_RESULT_RESPONSE)
 			return
@@ -412,7 +413,7 @@ server.route({
 				else {
 					reply(ERROR_RESULT_RESPONSE)
 				}
-			}, true)
+			})
 		}
 		else {
 			reply(EMPTY_RESULT_RESPONSE)
