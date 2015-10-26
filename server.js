@@ -1,9 +1,9 @@
 var PORT = 5000
 var LIST_SIZE = 5
+var CONTENT_API_BASE = 'http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/'
 
 /////////////config ends
 var Hapi = require('hapi');
-var strformat = require('strformat');
 
 var LIST_STACK = []
 var ARTICLE_STACK = []
@@ -48,6 +48,7 @@ server.route({
 		var keyword =  request.params.keyword
 		var date = request.params.date
 		log('/articlelist/topic/' + keyword + ' date: ' + date)
+		reply('');
 	}
 });
 
