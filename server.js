@@ -175,7 +175,6 @@ function url_q(url) {
 
 
 function getDetails(body) {
-	body = JSON.parse(body)
 	if (!body || !body.docs || !body.docs[0] || !body.docs[0].body || !body.docs[0].body.paragraphs) {
 		return null
 	}
@@ -200,11 +199,19 @@ function getArticle(url, callback) {
 	httpGet(query)
 		.then(function(body) {
 			if (body) {
+				body = JSON.parse(body)
 				var detail = getDetails(body)
 				if (detail) {
 					ARTICLE_STACK.push(url)
+					log(url)
+					log('hi'+body.docs[0].headline)
+					callback({'url':url,
+						'headline':body.docs[0].headline,
+						'body':detail
+					})
+				}else{
+					callback(null)
 				}
-				callback(detail)
 			}
 			else {
 				callback(null)
@@ -224,7 +231,7 @@ server.route({
 	path: '/articledetail/keyword/{keyword}',
 	handler: function(request, reply) {
 		var keyword = request.params.keyword;
-		log('/articledetail/keyword' + keyword)
+		log('/articledetail/keyword/' + keyword)
 		var list = _.last(LIST_STACK)
 		if (list) {
 			var url = search_headline_list(list, keyword)
