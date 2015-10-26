@@ -80,6 +80,7 @@ var LAST_LIST_QUERY = null
 
 function getHeadlineList(query, callback) {
 	log('LAST_LIST_QUERY:' + LAST_LIST_QUERY)
+	log('query'+query)
 	if (LAST_LIST_QUERY == null) {
 		LAST_LIST_QUERY = query
 		CURRENT_LIST_OFFSET = 0
@@ -90,7 +91,7 @@ function getHeadlineList(query, callback) {
 		}
 		else {
 			CURRENT_LIST_OFFSET = 0
-			LAST_LIST_QUERY = null
+			LAST_LIST_QUERY = query
 		}
 	}
 	query = offset_q(CURRENT_LIST_OFFSET) + query
