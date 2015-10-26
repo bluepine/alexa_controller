@@ -214,7 +214,9 @@ function getArticle(url, callback, donotpush) {
 				var detail = getDetails(body)
 				if (detail) {
 					if (!donotpush) {
-						ARTICLE_STACK.push(url)
+						if(url != _.last(ARTICLE_STACK)){
+							ARTICLE_STACK.push(url)
+						}
 					}
 					callback({
 						'url': url,
