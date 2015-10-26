@@ -33,7 +33,7 @@ var SECTION_SET = SET(['sport', 'business', 'health', 'tech', 'entertainment', '
 
 function topic_q(topic) {
 	var ret
-	if('technology' == topic){
+	if ('technology' == topic) {
 		topic = 'tech'
 	}
 	if (SECTION_SET.has(topic)) {
@@ -219,7 +219,7 @@ function getArticle(url, callback, donotpush) {
 				var detail = buildBody(body)
 				if (detail) {
 					if (!donotpush) {
-						if(url != _.last(ARTICLE_STACK)){
+						if (url != _.last(ARTICLE_STACK)) {
 							ARTICLE_STACK.push(url)
 						}
 					}
@@ -252,6 +252,10 @@ server.route({
 	handler: function(request, reply) {
 		var keyword = request.params.keyword;
 		log('/articledetail/keyword/' + keyword)
+		if (!LIST_STACK || LIST_STACK.length == 0) {
+			reply(NO_MATCH_RESPONSE)
+			return
+		}
 		var list = _.last(LIST_STACK)
 		if (list) {
 			var url = search_headline_list(list, keyword)
@@ -285,13 +289,17 @@ server.route({
 	handler: function(request, reply) {
 		var number = request.params.number
 		log('/articledetail/number/' + number)
+		if (!LIST_STACK || LIST_STACK.length == 0) {
+			reply(NO_MATCH_RESPONSE)
+			return
+		}
 		var list = _.last(LIST_STACK)
 		if (list) {
-			if(number > list.length){
+			if (number > list.length) {
 				reply(NO_MATCH_RESPONSE)
 				return
 			}
-			ARTICLE_INDEX = number -1
+			ARTICLE_INDEX = number - 1
 			var url = list[number - 1].url
 			if (url) {
 				getArticle(url, function(detail) {
@@ -386,11 +394,11 @@ server.route({
 	path: '/nextarticle',
 	handler: function(request, reply) {
 		log('/nextarticle')
-		if(!LIST_STACK){
+		if (!LIST_STACK || LIST_STACK.length == 0) {
 			reply(NO_MATCH_RESPONSE)
 			return
 		}
-		if((ARTICLE_INDEX+1) >= _.last(LIST_STACK).length){
+		if ((ARTICLE_INDEX + 1) >= _.last(LIST_STACK).length) {
 			reply(EMPTY_RESULT_RESPONSE)
 			return
 		}
@@ -417,7 +425,7 @@ server.route({
 	path: '/previouslist',
 	handler: function(request, reply) {
 		log('/previouslist')
-		if (!LIST_STACK || LIST_STACK.length == 1) {
+		if (!LIST_STACK || LIST_STACK.length <= 1) {
 			reply(EMPTY_RESULT_RESPONSE)
 			return
 		}
@@ -439,7 +447,7 @@ server.route({
 	path: '/newlist',
 	handler: function(request, reply) {
 		log('/new')
-		if(!LAST_LIST_QUERY){
+		if (null == LAST_LIST_QUERY) {
 			reply(NO_MATCH_RESPONSE)
 			return
 		}
