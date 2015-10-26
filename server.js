@@ -1,8 +1,11 @@
 //var PORT = 5000
 var LIST_SIZE = 5
 var CONTENT_API_BASE = 'http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/'
-
-/////////////config ends
+var NO_MATCH_RESPONSE = 'NOTMATCH'
+var EMPTY_RESULT_RESPONSE = ''
+var ERROR_RESULT_RESPONSE = 'ERROR'
+var DETAIL_SIZE_LIMIT = 1500
+	/////////////config ends
 var Hapi = require('hapi');
 var Q = require('q')
 var R = require('request')
@@ -110,7 +113,7 @@ server.route({
 		ARTICLE_STACK = []
 		ARTICLE_BLACKLIST_SET.clear()
 		log('/reset')
-		reply('');
+		reply(EMPTY_RESULT_RESPONSE);
 	}
 });
 
@@ -141,7 +144,7 @@ server.route({
 	path: '/articlelist/{date?}',
 	handler: function(request, reply) {
 		log('/articlelist')
-				var date = request.params.date
+		var date = request.params.date
 		var query = ''
 		if (date) {
 			query += date + '/'
@@ -154,6 +157,64 @@ server.route({
 });
 
 
+
+function search_headline_list(list, keyword) {
+	var arrayLength = list.length;
+	for (var i = 0; i < arrayLength; i++) {
+		var item = list[i]
+		if (item.headline.toLowerCase().indexOf(keyword.toLowerCase()) != -1) {
+			return item.url
+		}
+	}
+	return null
+}
+
+function url_q(url) {
+	return 'url:' + encodeURIComponent(url) + '/'
+}
+
+
+function getDetails(body) {
+	body = JSON.parse(body)
+	if (!body || !body.docs || !body.docs[0] || !body.docs[0].body || !body.docs[0].body.paragraphs) {
+		return null
+	}
+	else {
+		var paragraphs = body.docs[0].body.paragraphs
+		var ret = ''
+		var paragraphs_num = paragraphs.length
+		for (var i = 0; i < paragraphs_num; i++) {
+			ret += paragraphs[i].plaintext
+			if (ret.length >= DETAIL_SIZE_LIMIT) {
+				return ret
+			}
+		}
+		return ret
+	}
+	return null
+}
+
+function getArticle(url, callback) {
+	var query = url_q(url)
+	query = CONTENT_API_BASE + query
+	httpGet(query)
+		.then(function(body) {
+			if (body) {
+				var detail = getDetails(body)
+				if (detail) {
+					ARTICLE_STACK.push(url)
+				}
+				callback(detail)
+			}
+			else {
+				callback(null)
+			}
+		})
+		.catch(function(error) {
+			callback(null)
+		})
+		.done()
+}
 /*
 	articledetail/keyword/oklahoma #this API assumes the current list exists and
 	is stored in the backend. otherwise it returns empty result 
@@ -164,6 +225,26 @@ server.route({
 	handler: function(request, reply) {
 		var keyword = request.params.keyword;
 		log('/articledetail/keyword' + keyword)
+		var list = _.last(LIST_STACK)
+		if (list) {
+			var url = search_headline_list(list, keyword)
+			if (url) {
+				getArticle(url, function(detail) {
+					if (detail) {
+						reply(detail)
+					}
+					else {
+						reply(ERROR_RESULT_RESPONSE)
+					}
+				})
+			}
+			else {
+				reply(NO_MATCH_RESPONSE)
+			}
+		}
+		else {
+			reply(EMPTY_RESULT_RESPONSE)
+		}
 	}
 })
 
