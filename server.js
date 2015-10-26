@@ -357,6 +357,7 @@ server.route({
 			return
 		}
 		var url = ARTICLE_STACK.pop()
+		var url = _.last(ARTICLE_STACK)
 		if (url) {
 			getArticle(url, function(detail) {
 				if (detail) {
@@ -382,7 +383,8 @@ server.route({
 			reply(EMPTY_RESULT_RESPONSE)
 			return
 		}
-		var list = LIST_STACK.pop()
+		LIST_STACK.pop()
+		var list = _.last(LIST_STACK)
 		if (list) {
 			reply(JSON.stringify(list));
 		}
