@@ -351,7 +351,6 @@ server.route({
 			reply(EMPTY_RESULT_RESPONSE)
 			return
 		}
-		log(ARTICLE_STACK)
 		var url = ARTICLE_STACK.pop()
 		if (url) {
 			getArticle(url, function(detail) {
