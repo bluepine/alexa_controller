@@ -1,0 +1,20 @@
+keyword list:
+http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/headline:Trump/rows:5/start:0
+
+
+section list:
+sport, business, health, tech, entertainment, living, travel, politics, world, us, style, china, asia, middleeast, africa, europe, americas
+http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/section:health/rows:5/start:0
+
+
+general list:
+http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/rows:5/start:0
+
+publish dates:
+
+http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/section:health/rows:5/start:0/firstPublishDate:2013-10-08~2013-12-08
+http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/headline:Trump/rows:5/start:0/firstPublishDate:2013-10-08~2013-12-08
+http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/rows:5/start:0/firstPublishDate:2013-10-08~2013-12-08
+
+within one day:
+http://compositor.api.cnn.com/svc/mcs/v3/search/collection1/type:article/rows:5/start:0/firstPublishDate:2013-10-08~2013-10-09
