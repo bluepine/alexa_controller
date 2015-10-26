@@ -33,6 +33,9 @@ var SECTION_SET = SET(['sport', 'business', 'health', 'tech', 'entertainment', '
 
 function topic_q(topic) {
 	var ret
+	if('technology' == topic){
+		topic = 'tech'
+	}
 	if (SECTION_SET.has(topic)) {
 		ret = 'section:' + topic + '/'
 	}
