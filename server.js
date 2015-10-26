@@ -76,15 +76,22 @@ function build_headline_list(body) {
 }
 
 var CURRENT_LIST_OFFSET = 0
-var LAST_LIST_QUERY
+var LAST_LIST_QUERY = null
 
 function getHeadlineList(query, callback) {
-	if (LAST_LIST_QUERY == query) {
-		CURRENT_LIST_OFFSET += LIST_SIZE
+	log('LAST_LIST_QUERY:' + LAST_LIST_QUERY)
+	if (LAST_LIST_QUERY == null) {
+		LAST_LIST_QUERY = query
+		CURRENT_LIST_OFFSET = 0
 	}
 	else {
-		CURRENT_LIST_OFFSET = 0
-		LAST_LIST_QUERY = null
+		if (LAST_LIST_QUERY == query) {
+			CURRENT_LIST_OFFSET += LIST_SIZE
+		}
+		else {
+			CURRENT_LIST_OFFSET = 0
+			LAST_LIST_QUERY = null
+		}
 	}
 	query = offset_q(CURRENT_LIST_OFFSET) + query
 	httpGet(CONTENT_API_BASE + query)
@@ -193,7 +200,7 @@ function getDetails(body) {
 	return null
 }
 
-function getArticle(url, callback) {
+function getArticle(url, callback, donotpush) {
 	var query = url_q(url)
 	query = CONTENT_API_BASE + query
 	httpGet(query)
@@ -202,7 +209,9 @@ function getArticle(url, callback) {
 				body = JSON.parse(body)
 				var detail = getDetails(body)
 				if (detail) {
-					ARTICLE_STACK.push(url)
+					if (!donotpush) {
+						ARTICLE_STACK.push(url)
+					}
 					callback({
 						'url': url,
 						'headline': body.docs[0].headline,
@@ -267,6 +276,10 @@ server.route({
 		log('/articledetail/number/' + number)
 		var list = _.last(LIST_STACK)
 		if (list) {
+			if(number > list.length){
+				reply(NO_MATCH_RESPONSE)
+				return
+			}
 			var url = list[number - 1].url
 			if (url) {
 				getArticle(url, function(detail) {
@@ -306,11 +319,73 @@ server.route({
 			})
 		}
 		else {
-			reply(NO_MATCH_RESPONSE)
+			reply(EMPTY_RESULT_RESPONSE)
 		}
 	}
 });
 
+server.route({
+	method: 'GET',
+	path: '/currentlist',
+	handler: function(request, reply) {
+		log('/currentlist')
+		var list = _.last(LIST_STACK)
+		if (list) {
+			reply(JSON.stringify(list));
+		}
+		else {
+			reply(EMPTY_RESULT_RESPONSE)
+		}
+	}
+});
+
+
+
+server.route({
+	method: 'GET',
+	path: '/previousarticle',
+	handler: function(request, reply) {
+		log('/previousarticle')
+		if (!ARTICLE_STACK || ARTICLE_STACK.length == 1) {
+			reply(EMPTY_RESULT_RESPONSE)
+			return
+		}
+		log(ARTICLE_STACK)
+		var url = ARTICLE_STACK.pop()
+		if (url) {
+			getArticle(url, function(detail) {
+				if (detail) {
+					reply(detail)
+				}
+				else {
+					reply(ERROR_RESULT_RESPONSE)
+				}
+			}, true)
+		}
+		else {
+			reply(EMPTY_RESULT_RESPONSE)
+		}
+	}
+});
+
+server.route({
+	method: 'GET',
+	path: '/previouslist',
+	handler: function(request, reply) {
+		log('/previouslist')
+		if (!LIST_STACK || LIST_STACK.length == 1) {
+			reply(EMPTY_RESULT_RESPONSE)
+			return
+		}
+		var list = LIST_STACK.pop()
+		if (list) {
+			reply(JSON.stringify(list));
+		}
+		else {
+			reply(EMPTY_RESULT_RESPONSE)
+		}
+	}
+});
 
 server.start(function() {
 	console.log('Server running at:', server.info.uri);
