@@ -31,10 +31,10 @@ var SECTION_SET = SET(['sport', 'business', 'health', 'tech', 'entertainment', '
 function topic_q(topic) {
 	var ret
 	if (SECTION_SET.has(topic)) {
-		ret = '/section:' + topic + '/'
+		ret = 'section:' + topic + '/'
 	}
 	else {
-		ret = '/headline:' + topic + '/'
+		ret = 'headline:' + topic + '/'
 	}
 	return ret
 }
@@ -44,6 +44,7 @@ function offset_q(offset) {
 }
 
 var httpGet = function(url) {
+	log(url)
 	var deferred = Q.defer();
 	R(url, function(error, response, body) {
 		if (!error && response.statusCode == 200) {
@@ -82,7 +83,7 @@ function getHeadlineList(query, callback) {
 		CURRENT_LIST_OFFSET = 0
 		LAST_LIST_QUERY = null
 	}
-	query += offset_q(CURRENT_LIST_OFFSET)
+	query = offset_q(CURRENT_LIST_OFFSET) + query
 	httpGet(CONTENT_API_BASE + query)
 		.then(function(body) {
 			var headline_list = build_headline_list(body)
@@ -126,7 +127,7 @@ server.route({
 		log('/articlelist/topic/' + keyword + ' date: ' + date)
 		var query = topic_q(keyword)
 		if (date) {
-			query += '/'+ date
+			query += date + '/'
 		}
 		getHeadlineList(query, function(list) {
 			reply(JSON.stringify(list));
@@ -139,8 +140,16 @@ server.route({
 	method: 'GET',
 	path: '/articlelist/{date?}',
 	handler: function(request, reply) {
-		var keyword = request.params.keyword
-		log('/articlelist' + keyword)
+		log('/articlelist')
+				var date = request.params.date
+		var query = ''
+		if (date) {
+			query += date + '/'
+		}
+		getHeadlineList(query, function(list) {
+			reply(JSON.stringify(list));
+		})
+
 	}
 });
 
