@@ -102,7 +102,7 @@ function getHeadlineList(query, callback) {
 	httpGet(CONTENT_API_BASE + query)
 		.then(function(body) {
 			var headline_list = build_headline_list(body)
-			if (headline_list) {
+			if (headline_list && headline_list.length > 0) {
 				LIST_STACK.push(headline_list)
 			}
 			else {
